@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bottom Line Up Front - Ordering Activity</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --glass-bg: rgba(255, 255, 255, 0.95);
+      --glass-border: rgba(255, 255, 255, 0.6);
+      --glass-shadow: 0 4px 20px rgba(0, 40, 80, 0.12);
+      --accent-primary: #0f4c81;
+      --accent-secondary: #1a6bb5;
+      --accent-light: #e8f4fc;
+      --text-primary: #0d2137;
+      --text-secondary: #3d5a73;
+      --text-on-dark: #ffffff;
+      --success-bg: rgba(16, 185, 129, 0.15);
+      --success-border: #10b981;
+      --success-text: #065f46;
+      --hint-bg: rgba(251, 191, 36, 0.15);
+      --hint-border: #f59e0b;
+      --hint-text: #78350f;
+      --focus-ring: 0 0 0 3px rgba(15, 76, 129, 0.4);
+      --transition-smooth: 0.15s ease;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    body {
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      line-height: 1.5;
+      color: var(--text-primary);
+      /* Gradient visible in pop-out; Connect's background shows through in iframe */
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 50%, #3d7ab5 100%);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .container {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 0.75rem;
+      overflow: hidden;
+    }
+
+    .main-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--glass-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 1rem;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--glass-shadow);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .main-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), #4a9fd4);
+      border-radius: 1rem 1rem 0 0;
+    }
+
+    /* Compact header */
+    .header {
+      padding: 0.875rem 1rem 0.75rem;
+      border-bottom: 1px solid rgba(15, 76, 129, 0.1);
+      background: linear-gradient(135deg, rgba(15, 76, 129, 0.03), rgba(26, 107, 181, 0.03));
+      flex-shrink: 0;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+
+    .header h1 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+
+    .header p {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      margin: 0.25rem 0 0 0;
+    }
+
+    /* Help toggle button */
+    .help-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.625rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      font-family: inherit;
+      color: var(--accent-primary);
+      background: var(--accent-light);
+      border: 1px solid rgba(15, 76, 129, 0.2);
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      flex-shrink: 0;
+    }
+
+    .help-btn:hover {
+      background: white;
+    }
+
+    .help-btn:focus {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .help-btn svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    /* Instructions tooltip/dropdown */
+    .instructions {
+      display: none;
+      background: var(--accent-light);
+      padding: 0.625rem 1rem;
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      border-bottom: 1px solid rgba(15, 76, 129, 0.1);
+      flex-shrink: 0;
+    }
+
+    .instructions.visible {
+      display: block;
+    }
+
+    .instructions ul {
+      margin: 0;
+      padding-left: 1.125rem;
+    }
+
+    .instructions li {
+      margin-bottom: 0.125rem;
+    }
+
+    .instructions kbd {
+      display: inline-block;
+      padding: 0.0625rem 0.3125rem;
+      background: white;
+      border: 1px solid rgba(15, 76, 129, 0.2);
+      border-radius: 0.1875rem;
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--accent-primary);
+    }
+
+    /* Scrollable content area */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0.625rem 0.75rem 0.375rem;
+    }
+
+    /* Statement list */
+    .statement-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+    }
+
+    .statement-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: white;
+      border-radius: 0.75rem;
+      padding: 0.375rem;
+      box-shadow: 0 1px 4px rgba(0, 40, 80, 0.06);
+      border: 2px solid transparent;
+      transition: all var(--transition-smooth);
+    }
+
+    .statement-item:hover {
+      box-shadow: 0 2px 8px rgba(0, 40, 80, 0.1);
+    }
+
+    .position-badge {
+      width: 2rem;
+      height: 2rem;
+      min-width: 2rem;
+      border-radius: 0.5rem;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: var(--text-on-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9375rem;
+      flex-shrink: 0;
+    }
+
+    .statement-content {
+      flex: 1;
+      min-width: 0;
+      padding: 0.5rem 0.625rem;
+      font-size: 1rem;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      border: 2px solid transparent;
+      outline: none;
+      transition: all var(--transition-smooth);
+      background: var(--accent-light);
+      color: var(--text-primary);
+      line-height: 1.4;
+    }
+
+    .statement-content:focus {
+      border-color: var(--accent-primary);
+      box-shadow: var(--focus-ring);
+      background: white;
+    }
+
+    .statement-content:hover {
+      background: white;
+    }
+
+    /* Compact move buttons */
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      flex-shrink: 0;
+    }
+
+    .move-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 2rem;
+      height: 2rem;
+      border: 1.5px solid var(--accent-primary);
+      border-radius: 0.5rem;
+      background: white;
+      color: var(--accent-primary);
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      font-family: inherit;
+      padding: 0;
+    }
+
+    .move-btn:hover:not(:disabled) {
+      background: var(--accent-primary);
+      color: white;
+    }
+
+    .move-btn:focus {
+      outline: 2px solid var(--accent-secondary);
+      outline-offset: 1px;
+    }
+
+    .move-btn:active:not(:disabled) {
+      transform: scale(0.95);
+    }
+
+    .move-btn:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .move-btn svg {
+      width: 1rem;
+      height: 1rem;
+      stroke-width: 2.5;
+    }
+
+    /* Fixed footer with actions */
+    .footer {
+      padding: 0.5rem 0.75rem;
+      border-top: 1px solid rgba(15, 76, 129, 0.1);
+      background: rgba(255, 255, 255, 0.5);
+      flex-shrink: 0;
+    }
+
+    .action-bar {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 0.4375rem 0.875rem;
+      font-size: 0.9375rem;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: 0.5rem;
+      cursor: pointer;
+      transition: all var(--transition-smooth);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.375rem;
+    }
+
+    .btn:focus {
+      outline: 2px solid var(--accent-secondary);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: var(--text-on-dark);
+      border: none;
+      box-shadow: 0 2px 8px rgba(15, 76, 129, 0.3);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 4px 12px rgba(15, 76, 129, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--accent-primary);
+      border: 1.5px solid var(--accent-primary);
+    }
+
+    .btn-secondary:hover {
+      background: var(--accent-light);
+    }
+
+    .btn svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    /* Feedback area - inline in footer */
+    .feedback {
+      display: none;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 0.375rem;
+      border-radius: 0.5rem;
+      align-items: center;
+      font-size: 0.9375rem;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-0.25rem); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .feedback.visible {
+      display: flex;
+    }
+
+    .feedback.correct {
+      background: var(--success-bg);
+      border: 1.5px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    .feedback.incorrect {
+      background: var(--hint-bg);
+      border: 1.5px solid var(--hint-border);
+      color: var(--hint-text);
+    }
+
+    .feedback-icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .feedback.correct .feedback-icon {
+      background: var(--success-border);
+      color: white;
+    }
+
+    .feedback.incorrect .feedback-icon {
+      background: var(--hint-border);
+      color: white;
+    }
+
+    .feedback-icon svg {
+      width: 0.875rem;
+      height: 0.875rem;
+    }
+
+    .feedback-text {
+      margin: 0;
+      line-height: 1.4;
+    }
+
+    .feedback-text strong {
+      display: block;
+      font-size: 0.875rem;
+    }
+
+    /* Responsive - narrow width */
+    @media (max-width: 28rem) {
+      .header-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .help-btn {
+        align-self: flex-end;
+        margin-top: -1.5rem;
+      }
+
+      .statement-item {
+        flex-wrap: wrap;
+      }
+
+      .statement-content {
+        flex-basis: calc(100% - 2.5rem);
+        order: 1;
+      }
+
+      .button-group {
+        flex-direction: row;
+        width: 100%;
+        justify-content: center;
+        order: 2;
+        margin-top: 0.375rem;
+        padding-top: 0.375rem;
+        border-top: 1px solid var(--accent-light);
+      }
+
+      .move-btn {
+        width: 2.5rem;
+        height: 2rem;
+      }
+
+      .action-bar {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+
+    /* High contrast */
+    @media (prefers-contrast: high) {
+      .statement-item {
+        border: 2px solid var(--text-primary);
+      }
+      .move-btn {
+        border-width: 2px;
+      }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="live-region" role="status" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+
+  <div class="container">
+    <div class="main-card">
+      
+      <header class="header">
+        <div class="header-row">
+          <div>
+            <h1>Bottom Line Up Front</h1>
+            <p>Arrange statements with the most important information first.</p>
+          </div>
+          <div style="display: flex; gap: 0.375rem;">
+            <button class="help-btn" id="help-toggle" aria-expanded="false" aria-controls="instructions">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="M12 16v-4M12 8h.01"/>
+              </svg>
+              Help
+            </button>
+            <button class="help-btn" id="popout-btn" aria-label="Open in larger window for easier viewing">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                <polyline points="15 3 21 3 21 9"/>
+                <line x1="10" y1="14" x2="21" y2="3"/>
+              </svg>
+              Pop Out
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="instructions" id="instructions">
+        <ul>
+          <li>Use the <strong>arrow buttons</strong> to move statements up or down</li>
+          <li>Or select a statement and press <kbd>↑</kbd> <kbd>↓</kbd> keys</li>
+          <li>Need more space? Select <strong>Pop Out</strong> for a larger window</li>
+        </ul>
+      </div>
+
+      <div class="content-area" role="group" aria-labelledby="ordering-label">
+        <h2 id="ordering-label" class="sr-only">Reorderable list of statements. Select a statement and use arrow keys to change order.</h2>
+        <ol id="statement-list" class="statement-list" role="list"></ol>
+      </div>
+
+      <footer class="footer">
+        <div id="feedback" class="feedback" role="alert">
+          <div class="feedback-icon" id="feedback-icon-container">
+            <svg id="feedback-icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true" style="display:none;">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            <svg id="feedback-icon-hint" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true" style="display:none;">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4M12 8h.01"/>
+            </svg>
+          </div>
+          <p class="feedback-text" id="feedback-text"></p>
+        </div>
+
+        <div class="action-bar">
+          <button id="check-btn" class="btn btn-primary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            Lock It In
+          </button>
+          <button id="reset-btn" class="btn btn-secondary">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            Remix
+          </button>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // ============================================
+    // CUSTOMIZABLE CONTENT
+    // ============================================
+    
+    const STATEMENTS = [
+      { 
+        id: 1, 
+        text: "With these notices and documents, you'll have everything you need to legally operate your business in Washington State." 
+      },
+      { 
+        id: 2, 
+        text: "The department will assign you a filing frequency when you apply. File a tax return monthly, quarterly, or annually, even if you have no business to report." 
+      },
+      { 
+        id: 3, 
+        text: "You will receive a Unified Business Identifier (UBI). You need this UBI to file your excise tax return." 
+      },
+      { 
+        id: 4, 
+        text: "After your application is approved, you will receive your business license with any endorsements listed. Do not begin business activity until you receive this license. Post the license at each business location." 
+      },
+    ];
+
+    // Correct BLUF order
+    const CORRECT_ORDER = [4, 3, 2, 1];
+
+    const FEEDBACK = {
+      correct: {
+        title: "Excellent!",
+        text: "You've arranged these in BLUF order—leading with the critical action first. By thinking about this as a life event for the customer, not just packets of information the office sends out, you're creating a better customer experience."
+      },
+      incorrect: {
+        title: "Keep trying!",
+        text: "Think like someone who wants to jump right in to an exciting new business. What kind of mistake might they make? Let's make sure we draw that to the customer's attention up front."
+      }
+    };
+
+    // ============================================
+    // APPLICATION CODE
+    // ============================================
+
+    // Success sound using Web Audio API
+    function playSuccessSound() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create a pleasant two-tone chime
+        const playTone = (freq, startTime, duration) => {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.value = freq;
+          oscillator.type = 'sine';
+          
+          gainNode.gain.setValueAtTime(0.3, startTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+          
+          oscillator.start(startTime);
+          oscillator.stop(startTime + duration);
+        };
+        
+        const now = audioContext.currentTime;
+        playTone(523.25, now, 0.15);        // C5
+        playTone(659.25, now + 0.1, 0.2);   // E5
+        playTone(783.99, now + 0.2, 0.3);   // G5
+      } catch (e) {
+        // Audio not supported, fail silently
+      }
+    }
+
+    let currentOrder = [];
+    const listElement = document.getElementById('statement-list');
+    const feedbackElement = document.getElementById('feedback');
+    const liveRegion = document.getElementById('live-region');
+
+    function announce(message) {
+      liveRegion.textContent = '';
+      setTimeout(() => { liveRegion.textContent = message; }, 50);
+    }
+
+    function shuffleArray(array) {
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled;
+    }
+
+    function createStatementItem(statement, index, total) {
+      const li = document.createElement('li');
+      li.className = 'statement-item';
+      li.dataset.id = statement.id;
+
+      const position = document.createElement('div');
+      position.className = 'position-badge';
+      position.setAttribute('aria-hidden', 'true');
+      position.textContent = index + 1;
+
+      const content = document.createElement('div');
+      content.className = 'statement-content';
+      content.tabIndex = 0;
+      content.setAttribute('role', 'button');
+      content.setAttribute('aria-label', 
+        `${statement.text} Position ${index + 1} of ${total}. Use arrow keys to move.`
+      );
+      content.textContent = statement.text;
+      content.addEventListener('keydown', (e) => handleKeyDown(e, index));
+
+      const buttonGroup = document.createElement('div');
+      buttonGroup.className = 'button-group';
+
+      const upBtn = document.createElement('button');
+      upBtn.className = 'move-btn';
+      upBtn.type = 'button';
+      upBtn.disabled = index === 0;
+      upBtn.setAttribute('aria-label', `Move up`);
+      upBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg>`;
+      upBtn.addEventListener('click', () => moveItem(index, -1));
+
+      const downBtn = document.createElement('button');
+      downBtn.className = 'move-btn';
+      downBtn.type = 'button';
+      downBtn.disabled = index === total - 1;
+      downBtn.setAttribute('aria-label', `Move down`);
+      downBtn.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"/></svg>`;
+      downBtn.addEventListener('click', () => moveItem(index, 1));
+
+      buttonGroup.appendChild(upBtn);
+      buttonGroup.appendChild(downBtn);
+
+      li.appendChild(position);
+      li.appendChild(content);
+      li.appendChild(buttonGroup);
+
+      return li;
+    }
+
+    function renderList() {
+      listElement.innerHTML = '';
+      currentOrder.forEach((statement, index) => {
+        listElement.appendChild(createStatementItem(statement, index, currentOrder.length));
+      });
+    }
+
+    function moveItem(index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= currentOrder.length) return;
+
+      const [removed] = currentOrder.splice(index, 1);
+      currentOrder.splice(newIndex, 0, removed);
+      
+      hideFeedback();
+      renderList();
+
+      announce(`Moved to position ${newIndex + 1} of ${currentOrder.length}`);
+
+      setTimeout(() => {
+        listElement.querySelectorAll('.statement-content')[newIndex]?.focus();
+      }, 50);
+    }
+
+    function handleKeyDown(e, index) {
+      switch (e.key) {
+        case 'ArrowUp':
+          e.preventDefault();
+          moveItem(index, -1);
+          break;
+        case 'ArrowDown':
+          e.preventDefault();
+          moveItem(index, 1);
+          break;
+        case 'Home':
+          e.preventDefault();
+          if (index > 0) {
+            const [removed] = currentOrder.splice(index, 1);
+            currentOrder.unshift(removed);
+            hideFeedback();
+            renderList();
+            announce(`Moved to position 1`);
+            setTimeout(() => listElement.querySelector('.statement-content')?.focus(), 50);
+          }
+          break;
+        case 'End':
+          e.preventDefault();
+          if (index < currentOrder.length - 1) {
+            const [removed] = currentOrder.splice(index, 1);
+            currentOrder.push(removed);
+            hideFeedback();
+            renderList();
+            announce(`Moved to position ${currentOrder.length}`);
+            setTimeout(() => {
+              const items = listElement.querySelectorAll('.statement-content');
+              items[items.length - 1]?.focus();
+            }, 50);
+          }
+          break;
+      }
+    }
+
+    function checkAnswer() {
+      const userOrder = currentOrder.map(s => s.id);
+      const isCorrect = JSON.stringify(userOrder) === JSON.stringify(CORRECT_ORDER);
+      showFeedback(isCorrect);
+      if (isCorrect) playSuccessSound();
+      announce(isCorrect ? 'Correct!' : 'Not quite. Review the hint.');
+    }
+
+    function showFeedback(isCorrect) {
+      feedbackElement.classList.add('visible');
+      feedbackElement.classList.remove('correct', 'incorrect');
+      feedbackElement.classList.add(isCorrect ? 'correct' : 'incorrect');
+      
+      document.getElementById('feedback-icon-check').style.display = isCorrect ? 'block' : 'none';
+      document.getElementById('feedback-icon-hint').style.display = isCorrect ? 'none' : 'block';
+      document.getElementById('feedback-text').innerHTML = `<strong>${isCorrect ? FEEDBACK.correct.title : FEEDBACK.incorrect.title}</strong> ${isCorrect ? FEEDBACK.correct.text : FEEDBACK.incorrect.text}`;
+    }
+
+    function hideFeedback() {
+      feedbackElement.classList.remove('visible');
+    }
+
+    function resetActivity() {
+      currentOrder = shuffleArray(STATEMENTS);
+      hideFeedback();
+      renderList();
+      announce('Statements remixed.');
+    }
+
+    // Help toggle
+    const helpToggle = document.getElementById('help-toggle');
+    const instructions = document.getElementById('instructions');
+
+    helpToggle.addEventListener('click', () => {
+      const expanded = helpToggle.getAttribute('aria-expanded') === 'true';
+      helpToggle.setAttribute('aria-expanded', !expanded);
+      instructions.classList.toggle('visible', !expanded);
+    });
+
+    // Pop-out button - opens in new resizable window
+    document.getElementById('popout-btn').addEventListener('click', () => {
+      const width = 700;
+      const height = 650;
+      const left = (screen.width - width) / 2;
+      const top = (screen.height - height) / 2;
+      window.open(
+        window.location.href,
+        'bluf-activity',
+        `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+      );
+    });
+
+    // Initialize
+    function init() {
+      currentOrder = shuffleArray(STATEMENTS);
+      renderList();
+      document.getElementById('check-btn').addEventListener('click', checkAnswer);
+      document.getElementById('reset-btn').addEventListener('click', resetActivity);
+    }
+
+    document.readyState === 'loading' 
+      ? document.addEventListener('DOMContentLoaded', init) 
+      : init();
+
+    // Detect if we're in an iframe - if so, use transparent background
+    // If standalone (pop-out), show the gradient
+    try {
+      if (window.self !== window.top) {
+        document.body.style.background = 'transparent';
+      }
+    } catch (e) {
+      // Cross-origin iframe, keep gradient as fallback
+    }
+  </script>
+</body>
+</html>
